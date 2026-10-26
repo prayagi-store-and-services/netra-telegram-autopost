@@ -19,11 +19,10 @@ it would post and still records state, so enabling the token later never
 re-posts a backlog.
 """
 import json, os, re, sys, time, urllib.request, urllib.error
-import xml.etree.ElementTree as ET
 
 ORG = "prayagi-store-and-services"
 YT_CHANNEL_ID = "UCePc2TXpCV66xdG8Mzxzx3A"
-YT_FEED = f"https://www.youtube.com/feeds/videos.xml?channel_id={YT_CHANNEL_ID}"
+YT_VIDEOS_PAGE = "https://www.youtube.com/@NetraEcosystem/videos"
 CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "@Netraecosystem")
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 GH_TOKEN = os.environ.get("GH_TOKEN", "").strip()
@@ -95,28 +94,34 @@ def save_state(st):
 
 
 def fetch_youtube():
-    """Return list of dicts for the channel's recent videos."""
+    """Return list of dicts for the channel's recent videos.
+
+    YouTube's RSS feed (/feeds/videos.xml) is IP-blocked from datacenters
+    (404 from GitHub runners), so we scrape the public channel /videos page
+    instead - same public data, no auth needed.
+    """
     try:
-        raw = http_get(YT_FEED)
+        raw = http_get(YT_VIDEOS_PAGE).decode("utf-8", "replace")
     except Exception as e:
-        log(f"[youtube] feed fetch failed: {e}")
+        log(f"[youtube] videos page fetch failed: {e}")
         return []
-    ns = {"a": "http://www.w3.org/2005/Atom", "yt": "http://www.youtube.com/xml/schemas/2015"}
-    try:
-        root = ET.fromstring(raw)
-    except Exception as e:
-        log(f"[youtube] feed parse failed: {e}")
-        return []
-    items = []
-    for ent in root.findall("a:entry", ns):
-        vid = (ent.findtext("yt:videoId", default="", namespaces=ns) or "").strip()
-        title = (ent.findtext("a:title", default="", namespaces=ns) or "").strip()
-        link_el = ent.find("a:link", ns)
-        link = link_el.get("href") if link_el is not None else (f"https://youtu.be/{vid}" if vid else "")
-        pub = (ent.findtext("a:published", default="", namespaces=ns) or "").strip()
-        if vid and title:
-            items.append({"id": vid, "title": title, "link": link, "published": pub})
-    log(f"[youtube] {len(items)} videos in feed")
+    items, seen = [], set()
+    for m in re.finditer(r'"videoId":"([A-Za-z0-9_-]{11})"', raw):
+        vid = m.group(1)
+        if vid in seen:
+            continue
+        seg = raw[m.start():m.start() + 3000]
+        title = None
+        for t in re.finditer(r'"title":\{"content":"([^"]{1,200})"', seg):
+            cand = t.group(1)
+            if cand not in ("Save to playlist", "Share"):
+                title = cand
+                break
+        seen.add(vid)
+        if title:
+            items.append({"id": vid, "title": title,
+                          "link": f"https://youtu.be/{vid}", "published": ""})
+    log(f"[youtube] {len(items)} videos on channel page")
     return items
 
 
