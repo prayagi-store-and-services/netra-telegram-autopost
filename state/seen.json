@@ -1,1 +1,27 @@
-{"youtube": [], "releases": [], "seeded": false}
+{
+  "youtube": [],
+  "releases": [
+    "KBC:421689333",
+    "KBC:421600108",
+    "KBC:420321671",
+    "netra-assistant:418027696",
+    "netra-assistant:416907179",
+    "netra-assistant:416585480",
+    "netra-eco-app:422916478",
+    "netra-eco-app:421668053",
+    "netra-eco-app:421598596",
+    "netra-hub:422922758",
+    "netra-hub:422272803",
+    "netra-hub:422021202",
+    "netra-player:423179945",
+    "netra-player:422770999",
+    "netra-player:421664433",
+    "netra-trikaal:419528512",
+    "netra-trikaal:417631345",
+    "netra-trikaal:411279179",
+    "prayagi-Privacy-:421692493",
+    "prayagi-Privacy-:421598583",
+    "prayagi-Privacy-:420341421"
+  ],
+  "seeded": true
+}
