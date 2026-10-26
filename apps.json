@@ -1,0 +1,10 @@
+{
+  "Battery-Sentinel-Pro-Netra": {"name": "Netra Battery Sentinel Pro", "page": "https://prayagi-store-and-services.github.io/netra-eco/app/bspn/"},
+  "KBC": {"name": "KBC", "page": "https://prayagi-store-and-services.github.io/netra-eco/app/kbc/"},
+  "netra-hub": {"name": "Netra Hub", "page": "https://prayagi-store-and-services.github.io/netra-eco/app/hub/"},
+  "prayagi-Privacy-": {"name": "Prayagi Privacy", "page": "https://prayagi-store-and-services.github.io/netra-eco/app/privacy/"},
+  "netra-player": {"name": "Netra Player", "page": "https://prayagi-store-and-services.github.io/netra-eco/app/player/"},
+  "netra-eco-app": {"name": "Netra Eco App", "page": "https://prayagi-store-and-services.github.io/netra-eco/"},
+  "netra-trikaal": {"name": "Netra Trikaal", "page": "https://prayagi-store-and-services.github.io/netra-eco/app/trikaal/"},
+  "netra-assistant": {"name": "Netra One", "page": "https://prayagi-store-and-services.github.io/netra-eco/"}
+}
