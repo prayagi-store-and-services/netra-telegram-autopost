@@ -1,10 +1,22 @@
 name: Netra Telegram autopost
 on:
   schedule:
+    # Backstop only: revives the chain if a loop run dies. GitHub throttles
+    # scheduled runs heavily (observed ~5/day), so this is NOT the mechanism
+    # that keeps the 15-minute cadence - the self-chaining loop below is.
     - cron: "*/15 * * * *"
   workflow_dispatch:
+  repository_dispatch:
+    types: [release-published]
+
+concurrency:
+  group: autopost-loop
+  cancel-in-progress: true
+
 permissions:
   contents: write
+  actions: write
+
 jobs:
   autopost:
     runs-on: ubuntu-latest
@@ -13,16 +25,25 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Run autoposter
+      - name: Poll every 15 min for ~3h
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: "@Netraecosystem"
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python autopost.py
-      - name: Commit state
         run: |
           git config user.name "netra-autopost[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add state/seen.json
-          git diff --cached --quiet || git commit -m "state: seen items [skip ci]"
-          git push
+          for i in $(seq 1 12); do
+            echo "=== poll $i $(date -u) ==="
+            python autopost.py || true
+            git add state/seen.json
+            git diff --cached --quiet || git commit -m "state: seen items [skip ci]"
+            git pull --rebase --autostash origin main || true
+            git push || true
+            if [ "$i" -lt 12 ]; then sleep 900; fi
+          done
+      - name: Chain the next run
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api -X POST "repos/${{ github.repository }}/actions/workflows/autopost.yml/dispatches" -f ref=main
